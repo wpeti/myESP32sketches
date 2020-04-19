@@ -9,8 +9,8 @@
 
 const int JSON_BUFF_SIZE = 600;
 
-char* ssid = "";
-char* password =  "";
+char* ssid = "UPC879DEA5";
+char* password =  "cjhz5jjBhmbp";
 char* mqttServer = "192.168.0.115";
 int mqttPort = 1883;
 char* mqttTopic = "home/env/sensorreadings";

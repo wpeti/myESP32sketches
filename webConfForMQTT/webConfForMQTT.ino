@@ -15,7 +15,7 @@ const char wifiInitialApPassword[] = "Password123";
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
 //      when connected to the Wifi it will turn off (kept HIGH).
-#define STATUS_PIN 1
+//#define STATUS_PIN 1
 
 // -- Callback method declarations.
 void configSaved();
@@ -42,7 +42,7 @@ void setup()
   Serial.println();
   Serial.println("Starting up...");
 
-  iotWebConf.setStatusPin(STATUS_PIN);
+  //iotWebConf.setStatusPin(STATUS_PIN);
   iotWebConf.addParameter(&mqttSeparator);
   iotWebConf.addParameter(&mqttIPParam);
   iotWebConf.addParameter(&mqttTopicParam);
