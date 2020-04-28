@@ -56,22 +56,32 @@ void setup()
     Serial.println();
     Serial.println("Starting up...");
 
+    Serial.println("Initializing sensor..");
+    dht.begin();
+    Serial.println("Doing sensor readings..");
+    float humidity = readDHTHumidity();
+    float temperature = readDHTTemperature();
+
+    Serial.println("Initializing webConfig and Wifi connection..");
     initializeWebConfigurations();
 
-    Serial.println("Ready.");
+    while(!isMyWifiConnected)
+    {
+      Serial.println("Doing iotWebConf loops, while waiting to be connected to wifi network..");
+      iotWebConf.doLoop();
+      delay(1000);
+    }
+    
+    Serial.println("Sending measurements..");
+    sendMeasurements(temperature, humidity);
+    
+    Serial.println("Setup done!");
 }
 
 void loop()
 {
-    if (isMyWifiConnected)
-    {
-        initializeSensor();
-        measureAndSend();
-    }
-    
-    // -- doLoop should be called as frequently as possible.
-    iotWebConf.doLoop();
-    delay(10000);
+  //TODO: write go to sleep here.
+  Serial.println("Doing loop, but should be sleeping... I'M A ZOMBIE, KILL ME!");
 }
 
 void configSaved()
@@ -94,6 +104,10 @@ void initializeWebConfigurations()
 
     // -- Initializing the configuration.
     iotWebConf.init();
+
+    // on iotWebConf.init and on config saved, the ApTimeout is being overwritten, so need to set it after init.
+    //TODO: code logic: if button IS pressed (pin pulled low), AP timeout is not set (so default 30seconds remain). In case NOT pressed, run below line to change AP timout to 100ms.
+    iotWebConf.setApTimeoutMs(100);
 
     // -- Set up required URL handlers on the web server.
     server.on("/", [] { iotWebConf.handleConfig(); });
@@ -126,12 +140,8 @@ void wifiConnected()
   isMyWifiConnected = true;
 }
 
-void measureAndSend()
+void sendMeasurements(float humidity, float temperature)
 {
-    float humidity = readDHTHumidity();
-
-    float temperature = readDHTTemperature();
-    
     char *mqttPayload = composeJsonPayload(humidity, temperature);
 
     sendPayloadToMqtt(mqttPayload);
@@ -228,10 +238,4 @@ float readDHTHumidity()
     {
         return h;
     }
-}
-
-void initializeSensor()
-{
-    Serial.println("Initializing sensor");
-    dht.begin();
 }
