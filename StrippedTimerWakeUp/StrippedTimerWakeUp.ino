@@ -1,4 +1,4 @@
-int TIME_TO_SLEEP = 5;
+#define SECONDS_TO_SLEEP 5
 
 void setup(){
   Serial.begin(115200);
@@ -11,8 +11,8 @@ void setup(){
   First we configure the wake up source
   We set our ESP32 to wake up every 5 seconds
   */
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * 1000000ULL);
-  Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) + " [second]");
+  esp_sleep_enable_timer_wakeup(SECONDS_TO_SLEEP * 1000000ULL);
+  Serial.println("Setup ESP32 to sleep for every " + String(SECONDS_TO_SLEEP) + " [second]");
 
   Serial.println("Going to sleep now..");
   Serial.flush(); 
