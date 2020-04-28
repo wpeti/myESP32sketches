@@ -42,6 +42,7 @@ WebServer server(80);
 char mqttIPParamValue[STRING_LEN];
 char mqttTopicParamValue[STRING_LEN];
 char mqttPortParamValue[NUMBER_LEN];
+char secondsToSleepParamValue[NUMBER_LEN];
 
 IotWebConf iotWebConf(thingName, &dnsServer, &server, wifiInitialApPassword, CONFIG_VERSION);
 // -- We can add a legend to the separator
@@ -49,13 +50,17 @@ IotWebConfSeparator mqttSeparator = IotWebConfSeparator("MQTT settings");
 IotWebConfParameter mqttIPParam = IotWebConfParameter("MQTT server IP addr", "mqttIPParam", mqttIPParamValue, STRING_LEN, "string", "e.g. 192.168.0.115");
 IotWebConfParameter mqttTopicParam = IotWebConfParameter("MQTT topic", "mqttTopicParam", mqttTopicParamValue, STRING_LEN, "string", "e.g. home/env/sensorreadings");
 IotWebConfParameter mqttPortParam = IotWebConfParameter("MQTT port", "mqttPortParam", mqttPortParamValue, NUMBER_LEN, "number", "1..65535, e.g. 1883", NULL, "min='1' max='65535' step='1'");
+IotWebConfParameter secondsToSleepParam = IotWebConfParameter("Seconds to sleep", "secondsToSleepParam", secondsToSleepParamValue, NUMBER_LEN, "number", "Seconds to sleep", NULL, "min='1' max='32767' step='1'");
 
 void setup()
 {
     Serial.begin(115200);
+    delay(1000); //Take some time to open up the Serial Monitor
     Serial.println();
     Serial.println("Starting up...");
 
+    print_wakeup_reason();
+    
     Serial.println("Initializing sensor..");
     dht.begin();
     Serial.println("Doing sensor readings..");
@@ -75,7 +80,16 @@ void setup()
     Serial.println("Sending measurements..");
     sendMeasurements(temperature, humidity);
     
-    Serial.println("Setup done!");
+    /*
+    First we configure the wake up source
+    We set our ESP32 to wake up every 5 seconds
+    */
+    esp_sleep_enable_timer_wakeup(atoi(secondsToSleepParamValue) * 1000000ULL);
+    Serial.println("Setup ESP32 to sleep for every " + String(secondsToSleepParamValue) + " [second]");
+  
+    Serial.println("Going to sleep now..");
+    Serial.flush(); 
+    esp_deep_sleep_start();
 }
 
 void loop()
@@ -131,6 +145,18 @@ boolean formValidator()
         valid &= false;
     }
 
+    if (server.arg(secondsToSleepParam.getId()).length() < 1)
+    {
+        secondsToSleepParam.errorMessage = "At least 1 characters as Seconds to sleep!";
+        valid &= false;
+    }
+
+    if (atoi(server.arg(secondsToSleepParam.getId())) < 1 && atoi(server.arg(secondsToSleepParam.getId())) > 32767)
+    {
+        secondsToSleepParam.errorMessage = "Seconds to sleep value must be between 1 and 32767 !";
+        valid &= false;
+    }
+    
     return valid;
 }
 
@@ -238,4 +264,24 @@ float readDHTHumidity()
     {
         return h;
     }
+}
+
+/*
+Method to print the reason by which ESP32
+has been awaken from sleep
+*/
+void print_wakeup_reason(){
+  esp_sleep_wakeup_cause_t wakeup_reason;
+
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
+    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
 }
