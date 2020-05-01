@@ -185,7 +185,7 @@ char *composeJsonPayload(float humidity, float temp)
 
     StaticJsonDocument<JSON_BUFF_SIZE> doc;
 
-    doc["measurement"] = thingName;
+    doc["measurement"] = iotWebConf.getThingName();
     doc["fields"]["humidity[%]"] = humidity;
     doc["fields"]["temperature[C]"] = temp;
 
@@ -212,9 +212,9 @@ void sendPayloadToMqtt(char *mqttPayload)
     while (!pubSubCli.connected())
     {
         Serial.print("Connecting to MQTT using name: ");
-        Serial.println(thingName);
+        Serial.println(iotWebConf.getThingName());
         
-        if (pubSubCli.connect(thingName))
+        if (pubSubCli.connect(iotWebConf.getThingName()))
         {
             Serial.println("Connected to MQTT!");
         }
