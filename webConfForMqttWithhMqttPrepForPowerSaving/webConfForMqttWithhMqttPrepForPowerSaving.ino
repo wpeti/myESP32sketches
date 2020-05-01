@@ -27,7 +27,8 @@ const char wifiInitialApPassword[] = "Password123";
 // -- Status indicator pin.
 //      First it will light up (kept LOW), on Wifi connection it will blink,
 //      when connected to the Wifi it will turn off (kept HIGH).
-//#define STATUS_PIN 1
+#define STATUS_PIN 12 //G12
+#define CONFIG_PIN 14 //G14
 
 boolean isMyWifiConnected = false;
 
@@ -76,13 +77,13 @@ void setup()
       iotWebConf.doLoop();
       delay(1000);
     }
-    
+        
     Serial.println("Sending measurements..");
-    sendMeasurements(temperature, humidity);
-    
+    sendMeasurements(humidity, temperature);
+
     /*
     First we configure the wake up source
-    We set our ESP32 to wake up every 5 seconds
+    We set our ESP32 to wake up every once in a while
     */
     esp_sleep_enable_timer_wakeup(atoi(secondsToSleepParamValue) * 1000000ULL);
     Serial.println("Setup ESP32 to sleep for every " + String(secondsToSleepParamValue) + " [second]");
@@ -94,8 +95,9 @@ void setup()
 
 void loop()
 {
-  //TODO: write go to sleep here.
+  iotWebConf.doLoop();
   Serial.println("Doing loop, but should be sleeping... I'M A ZOMBIE, KILL ME!");
+  delay(500);
 }
 
 void configSaved()
@@ -105,22 +107,24 @@ void configSaved()
 
 void initializeWebConfigurations()
 {
-    //iotWebConf.setStatusPin(STATUS_PIN);
+    iotWebConf.setStatusPin(STATUS_PIN);
+    iotWebConf.setConfigPin(CONFIG_PIN);
     iotWebConf.addParameter(&mqttSeparator);
     iotWebConf.addParameter(&mqttIPParam);
     iotWebConf.addParameter(&mqttTopicParam);
     iotWebConf.addParameter(&mqttPortParam);
+    iotWebConf.addParameter(&secondsToSleepParam);
+
 
     iotWebConf.setConfigSavedCallback(&configSaved);
     iotWebConf.setFormValidator(&formValidator);
     iotWebConf.setWifiConnectionCallback(&wifiConnected);
-    //iotWebConf.getApTimeoutParameter()->visible = true;
-
+    
     // -- Initializing the configuration.
     iotWebConf.init();
 
     // on iotWebConf.init and on config saved, the ApTimeout is being overwritten, so need to set it after init.
-    //TODO: code logic: if button IS pressed (pin pulled low), AP timeout is not set (so default 30seconds remain). In case NOT pressed, run below line to change AP timout to 100ms.
+    // this is necessary to not to waste time with waiting for AP connection. For that, there is the reset button (CONFIG_PIN).
     iotWebConf.setApTimeoutMs(100);
 
     // -- Set up required URL handlers on the web server.
@@ -151,7 +155,7 @@ boolean formValidator()
         valid &= false;
     }
 
-    if (atoi(server.arg(secondsToSleepParam.getId())) < 1 && atoi(server.arg(secondsToSleepParam.getId())) > 32767)
+    if (server.arg(secondsToSleepParam.getId()).toInt() < 1 && server.arg(secondsToSleepParam.getId()).toInt() > 32767)
     {
         secondsToSleepParam.errorMessage = "Seconds to sleep value must be between 1 and 32767 !";
         valid &= false;
