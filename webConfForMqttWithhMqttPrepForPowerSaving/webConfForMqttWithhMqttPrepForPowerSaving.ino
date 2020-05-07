@@ -1,5 +1,4 @@
 //TODO make MQTT publishing secure
-//TODO implement going to sleep if wifi connecting doesn't work out
 //every 55 sec  -> 2020-05-01T18:43:18 -> 2020-05-04T09:37:38 -> 2x24+14h 54m = 62h 54m
 //every 595 sec ->
 
@@ -76,21 +75,38 @@ void setup()
     Serial.println("Initializing webConfig and Wifi connection..");
     initializeWebConfigurations();
 
-//TODO count tries until 30, then go to sleep without sending measurements
-    while(!isMyWifiConnected)
+    //Waiting for thing to start connecting to wifi
+    //This is mainly necessary to avoid thing going to sleep while configuration changes are being applied in AP mode.
+    //see IotWebConf states here: https://github.com/prampec/IotWebConf/blob/master/src/IotWebConf.h
+    while(iotWebConf.getState() < 2)
     {
-      Serial.println("Doing iotWebConf loops, while waiting to be connected to wifi network..");
+      Serial.print("Doing iotWebConf loops, while waiting to start conneting to wifi network.. IotWebConf status: ");
+      Serial.println(iotWebConf.getState());
+      iotWebConf.doLoop();
+      delay(500);
+    }
+
+    int connectionTriesCount = 0;
+    while(!isMyWifiConnected && connectionTriesCount < 30)
+    {
+      Serial.print("Doing iotWebConf loops, while waiting to be connected to wifi network.. IotWebConf status: ");
+      Serial.println(iotWebConf.getState());
       iotWebConf.doLoop();
       delay(1000);
+      connectionTriesCount++;
     }
-        
-    Serial.println("Sending measurements..");
-    sendMeasurements(humidity, temperature);
 
-    /*
-    First we configure the wake up source
-    We set our ESP32 to wake up every once in a while
-    */
+    //we only try sending the measurements if wifi connection is available..
+    if (isMyWifiConnected)
+    {
+        Serial.println("Sending measurements..");
+        sendMeasurements(humidity, temperature);
+    }
+    else
+    {
+      Serial.println("Not sending measurements because wifi is not connected!");
+    }
+
     esp_sleep_enable_timer_wakeup(atoi(secondsToSleepParamValue) * 1000000ULL);
     Serial.println("Setup ESP32 to sleep for every " + String(secondsToSleepParamValue) + " [second]");
   
