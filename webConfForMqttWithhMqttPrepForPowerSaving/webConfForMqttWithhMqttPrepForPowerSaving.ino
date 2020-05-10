@@ -1,6 +1,7 @@
 //TODO make MQTT publishing secure
-//every 55 sec  -> 2020-05-01T18:43:18 -> 2020-05-04T09:37:38 -> 2x24+14h 54m = 62h 54m
-//every 595 sec ->
+//every 55 sec      (1min)  -> 2020-05-01T18:43:18 -> 2020-05-04T09:37:38 -> 2x24+14h 54m = 62h 54m
+//every 595 sec     (10min) -> 2020-05-07T17:16:16 -> 2020-05-10T08:47:12 -> 2x24+15h 27m = 63h 27m
+//every 1795 sec    (30min) -> 
 
 #include <IotWebConf.h>
 #include <ArduinoJson.h>
