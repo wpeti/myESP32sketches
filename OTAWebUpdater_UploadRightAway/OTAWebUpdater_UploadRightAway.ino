@@ -5,55 +5,29 @@
 #include <Update.h>
 
 const char* host = "esp32";
-const char* ssid = "xxx";
-const char* password = "xxxx";
+const char* ssid     = "UPC879DEA5";
+const char* password = "cjhz5jjBhmbp";
 
 WebServer server(80);
 
 /*
  * Login page
  */
-
 const char* loginIndex = 
- "<form name='loginForm'>"
+
     "<table width='20%' bgcolor='A09F9F' align='center'>"
         "<tr>"
+            "<br>"
+            "<br>"
             "<td colspan=2>"
-                "<center><font size=4><b>ESP32 Login Page</b></font></center>"
+                "<center><font size=4><b>ESP32 Update page</b></font></center>"
                 "<br>"
+                "<center><font size=4><form action='/serverIndex'><input type='submit' value='Begin update'/></form></font></center>"
             "</td>"
             "<br>"
             "<br>"
         "</tr>"
-        "<td>Username:</td>"
-        "<td><input type='text' size=25 name='userid'><br></td>"
-        "</tr>"
-        "<br>"
-        "<br>"
-        "<tr>"
-            "<td>Password:</td>"
-            "<td><input type='Password' size=25 name='pwd'><br></td>"
-            "<br>"
-            "<br>"
-        "</tr>"
-        "<tr>"
-            "<td><input type='submit' onclick='window.open('/serverIndex')' value='Updating'></td>"
-        "</tr>"
-    "</table>"
-"</form>"
-"<script>"
-    "function check(form)"
-    "{"
-    "if(form.userid.value=='admin' && form.pwd.value=='admin')"
-    "{"
-    "window.open('/serverIndex')"
-    "}"
-    "else"
-    "{"
-    " alert('Error Password or Username')/*displays error message*/"
-    "}"
-    "}"
-"</script>";
+    "</table>";
  
 /*
  * Server Index Page
@@ -83,6 +57,11 @@ const char* serverIndex =
   "if (evt.lengthComputable) {"
   "var per = evt.loaded / evt.total;"
   "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+  "if (Math.round(per*100) == 100) {"
+  "var newDoc = document.open('text/html', 'replace');"
+  "newDoc.write('Update finished! <br><br> Rebooting ESP....');"
+  "newDoc.close();"
+  "}"
   "}"
   "}, false);"
   "return xhr;"
